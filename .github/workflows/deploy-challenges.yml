@@ -1,0 +1,51 @@
+
+name: Deploy Challenges Project
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'challenges/**'
+      - '.github/workflows/deploy-challenges.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: challenges-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: challenges/package-lock.json
+
+      - name: Install dependencies
+        working-directory: challenges
+        run: npm ci
+
+      - name: Build project
+        working-directory: challenges
+        run: npm run build
+
+      - name: Upload build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: challenges/dist
+
+      - name: Deploy
+        uses: actions/deploy-pages@v4
